@@ -15,31 +15,60 @@ on:
         options: [all, data_load, data_quality_analysis, data_research, visualization]
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      data_load: ${{ steps.filter.outputs.data_load }}
+      data_quality_analysis: ${{ steps.filter.outputs.data_quality_analysis }}
+      data_research: ${{ steps.filter.outputs.data_research }}
+      visualization: ${{ steps.filter.outputs.visualization }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            data_load: ['src/get_data.py']
+            data_quality_analysis: ['notebooks/data_quality_analysis.ipynb']
+            data_research: ['notebooks/data_research.ipynb']
+            visualization: ['notebooks/visualization.ipynb']
+
   run-modules:
+    needs: changes
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         module: [data_load, data_quality_analysis, data_research, visualization]
 
-    if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.module == 'all' || github.event.inputs.module == matrix.module }}
-
     steps:
       - name: Checkout repository
+        if: >
+          (github.event_name == 'workflow_dispatch' && (github.event.inputs.module == 'all' || github.event.inputs.module == matrix.module)) ||
+          (github.event_name != 'workflow_dispatch' && needs.changes.outputs[matrix.module] == 'true')
         uses: actions/checkout@v4
 
       - name: Set up Python
+        if: >
+          (github.event_name == 'workflow_dispatch' && (github.event.inputs.module == 'all' || github.event.inputs.module == matrix.module)) ||
+          (github.event_name != 'workflow_dispatch' && needs.changes.outputs[matrix.module] == 'true')
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
           cache: "pip"
 
       - name: Install dependencies
+        if: >
+          (github.event_name == 'workflow_dispatch' && (github.event.inputs.module == 'all' || github.event.inputs.module == matrix.module)) ||
+          (github.event_name != 'workflow_dispatch' && needs.changes.outputs[matrix.module] == 'true')
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: Execute Module
+        if: >
+          (github.event_name == 'workflow_dispatch' && (github.event.inputs.module == 'all' || github.event.inputs.module == matrix.module)) ||
+          (github.event_name != 'workflow_dispatch' && needs.changes.outputs[matrix.module] == 'true')
         run: |
           mkdir -p artifacts/${{ matrix.module }}
           
@@ -50,6 +79,9 @@ jobs:
           fi
 
       - name: Upload artifacts
+        if: >
+          (github.event_name == 'workflow_dispatch' && (github.event.inputs.module == 'all' || github.event.inputs.module == matrix.module)) ||
+          (github.event_name != 'workflow_dispatch' && needs.changes.outputs[matrix.module] == 'true')
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.module }}-results
