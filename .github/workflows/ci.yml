@@ -1,0 +1,56 @@
+name: CI Modular Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+    inputs:
+      module:
+        description: "Select module to run"
+        required: true
+        default: "all"
+        type: choice
+        options: [all, data_load, data_quality_analysis, data_research, visualization]
+
+jobs:
+  run-modules:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module: [data_load, data_quality_analysis, data_research, visualization]
+
+    if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.module == 'all' || github.event.inputs.module == matrix.module }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Execute Module
+        run: |
+          mkdir -p artifacts/${{ matrix.module }}
+          
+          if [ "${{ matrix.module }}" == "data_load" ]; then
+            python src/get_data.py > artifacts/${{ matrix.module }}/execution.log 2>&1
+          else
+            jupyter nbconvert --to notebook --execute notebooks/${{ matrix.module }}.ipynb --output ../artifacts/${{ matrix.module }}/result.ipynb
+          fi
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.module }}-results
+          path: artifacts/${{ matrix.module }}/
