@@ -16,18 +16,19 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          python -m pip install -r requirements.txt
 
       - name: Environment check
         run: |
-          Write-Host "Running on Roman's local machine"
+          Write-Host "Checking Python version and paths..."
           python --version
+          Get-Command python | Select-Object -Property Source
           New-Item -ItemType Directory -Force -Path artifacts/local_check
           python -m compileall src/ | Out-File -FilePath artifacts/local_check/status.txt
 
       - name: Run local data load test
         run: |
-          Write-Host "Testing data load module locally..."
+          Write-Host "Running script with local dependencies..."
           python src/get_data.py | Add-Content -Path artifacts/local_check/status.txt
 
       - name: Upload local report
