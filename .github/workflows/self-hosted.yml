@@ -13,15 +13,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Environment check
+      - name: Local Environment check
         run: |
           echo "Running on Roman's local machine"
           python --version
           mkdir -p artifacts/local_check
           python -m compileall src/ > artifacts/local_check/status.txt 2>&1
 
+      - name: Run local data load test
+        run: |
+          echo "Testing data load module locally..."
+          python src/get_data.py >> artifacts/local_check/status.txt 2>&1
+
       - name: Upload local report
         uses: actions/upload-artifact@v4
         with:
-          name: local-validation-report
+          name: local-validation-results
           path: artifacts/local_check/

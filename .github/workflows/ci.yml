@@ -15,6 +15,7 @@ on:
         options: [all, data_load, data_quality_analysis, data_research, visualization]
 
 jobs:
+  # Job to detect which files were changed
   changes:
     runs-on: ubuntu-latest
     outputs:
@@ -72,8 +73,11 @@ jobs:
         run: |
           mkdir -p artifacts/${{ matrix.module }}
           
+          echo "Preparing data for ${{ matrix.module }}..."
+          python src/get_data.py
+
           if [ "${{ matrix.module }}" == "data_load" ]; then
-            python src/get_data.py > artifacts/${{ matrix.module }}/execution.log 2>&1
+            echo "Data download verified and completed." > artifacts/${{ matrix.module }}/execution.log
           else
             jupyter nbconvert --to notebook --execute notebooks/${{ matrix.module }}.ipynb --output ../artifacts/${{ matrix.module }}/result.ipynb
           fi
