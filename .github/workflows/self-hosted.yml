@@ -1,0 +1,27 @@
+name: Self-Hosted Pipeline
+
+on:
+  workflow_dispatch:
+
+jobs:
+  local-run:
+    runs-on: self-hosted
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Environment check
+        run: |
+          echo "Running on Roman's local machine"
+          python --version
+          mkdir -p artifacts/local_check
+          python -m compileall src/ > artifacts/local_check/status.txt 2>&1
+
+      - name: Upload local report
+        uses: actions/upload-artifact@v4
+        with:
+          name: local-validation-report
+          path: artifacts/local_check/
