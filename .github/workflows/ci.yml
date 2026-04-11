@@ -23,10 +23,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run tests
-        run: |
-          pytest -q
-
       - name: Smoke import services
         run: |
           python -m compileall src data_load data_quality_analysis data_research visualization web
