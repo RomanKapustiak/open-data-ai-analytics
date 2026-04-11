@@ -1,0 +1,92 @@
+services:
+  data_load:
+    build:
+      context: .
+      dockerfile: data_load/Dockerfile
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+      - ./runtime:/app/runtime
+    networks:
+      - analytics-net
+    restart: "no"
+
+  data_quality_analysis:
+    build:
+      context: .
+      dockerfile: data_quality_analysis/Dockerfile
+    env_file:
+      - .env
+    depends_on:
+      data_load:
+        condition: service_completed_successfully
+    volumes:
+      - ./runtime:/app/runtime
+      - ./reports:/app/reports
+    networks:
+      - analytics-net
+    restart: "no"
+
+  data_research:
+    build:
+      context: .
+      dockerfile: data_research/Dockerfile
+    env_file:
+      - .env
+    depends_on:
+      data_load:
+        condition: service_completed_successfully
+    volumes:
+      - ./runtime:/app/runtime
+      - ./reports:/app/reports
+    networks:
+      - analytics-net
+    restart: "no"
+
+  visualization:
+    build:
+      context: .
+      dockerfile: visualization/Dockerfile
+    env_file:
+      - .env
+    depends_on:
+      data_load:
+        condition: service_completed_successfully
+    volumes:
+      - ./runtime:/app/runtime
+      - ./reports:/app/reports
+    networks:
+      - analytics-net
+    restart: "no"
+
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    env_file:
+      - .env
+    depends_on:
+      data_quality_analysis:
+        condition: service_completed_successfully
+      data_research:
+        condition: service_completed_successfully
+      visualization:
+        condition: service_completed_successfully
+    volumes:
+      - ./data:/app/data:ro
+      - ./runtime:/app/runtime
+      - ./reports:/app/reports
+    ports:
+      - "${WEB_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+    networks:
+      - analytics-net
+
+networks:
+  analytics-net:
+    driver: bridge

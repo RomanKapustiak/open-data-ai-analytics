@@ -6,87 +6,27 @@ on:
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
-    inputs:
-      module:
-        description: "Select module to run"
-        required: true
-        default: "all"
-        type: choice
-        options: [all, data_load, data_quality_analysis, data_research, visualization]
 
 jobs:
-  # Job to detect which files were changed
-  changes:
+  tests:
     runs-on: ubuntu-latest
-    outputs:
-      data_load: ${{ steps.filter.outputs.data_load }}
-      data_quality_analysis: ${{ steps.filter.outputs.data_quality_analysis }}
-      data_research: ${{ steps.filter.outputs.data_research }}
-      visualization: ${{ steps.filter.outputs.visualization }}
     steps:
       - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            data_load: ['src/get_data.py']
-            data_quality_analysis: ['notebooks/data_quality_analysis.ipynb']
-            data_research: ['notebooks/data_research.ipynb']
-            visualization: ['notebooks/visualization.ipynb']
-
-  run-modules:
-    needs: changes
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        module: [data_load, data_quality_analysis, data_research, visualization]
-
-    steps:
-      - name: Checkout repository
-        if: >
-          (github.event_name == 'workflow_dispatch' && (github.event.inputs.module == 'all' || github.event.inputs.module == matrix.module)) ||
-          (github.event_name != 'workflow_dispatch' && needs.changes.outputs[matrix.module] == 'true')
-        uses: actions/checkout@v4
-
       - name: Set up Python
-        if: >
-          (github.event_name == 'workflow_dispatch' && (github.event.inputs.module == 'all' || github.event.inputs.module == matrix.module)) ||
-          (github.event_name != 'workflow_dispatch' && needs.changes.outputs[matrix.module] == 'true')
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
           cache: "pip"
 
       - name: Install dependencies
-        if: >
-          (github.event_name == 'workflow_dispatch' && (github.event.inputs.module == 'all' || github.event.inputs.module == matrix.module)) ||
-          (github.event_name != 'workflow_dispatch' && needs.changes.outputs[matrix.module] == 'true')
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Execute Module
-        if: >
-          (github.event_name == 'workflow_dispatch' && (github.event.inputs.module == 'all' || github.event.inputs.module == matrix.module)) ||
-          (github.event_name != 'workflow_dispatch' && needs.changes.outputs[matrix.module] == 'true')
+      - name: Run tests
         run: |
-          mkdir -p artifacts/${{ matrix.module }}
-          
-          echo "Preparing data for ${{ matrix.module }}..."
-          python src/get_data.py
+          pytest -q
 
-          if [ "${{ matrix.module }}" == "data_load" ]; then
-            echo "Data download verified and completed." > artifacts/${{ matrix.module }}/execution.log
-          else
-            jupyter nbconvert --to notebook --execute notebooks/${{ matrix.module }}.ipynb --output ../artifacts/${{ matrix.module }}/result.ipynb
-          fi
-
-      - name: Upload artifacts
-        if: >
-          (github.event_name == 'workflow_dispatch' && (github.event.inputs.module == 'all' || github.event.inputs.module == matrix.module)) ||
-          (github.event_name != 'workflow_dispatch' && needs.changes.outputs[matrix.module] == 'true')
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.module }}-results
-          path: artifacts/${{ matrix.module }}/
+      - name: Smoke import services
+        run: |
+          python -m compileall src data_load data_quality_analysis data_research visualization web

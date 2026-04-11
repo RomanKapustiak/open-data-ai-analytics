@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Open Data Analytics Lab</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}">
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">Open Data Analytics</p>
+        <h1>Вебпортал для аналізу реєстру транспортних засобів</h1>
+        <p class="lead">
+          Інтерфейс показує статус підготовки даних, результати перевірки якості,
+          базове дослідження набору даних та візуалізації.
+        </p>
+      </div>
+      <div class="hero-card">
+        <p><strong>База даних:</strong> {{ "готова" if database_ready else "ще не створена" }}</p>
+        <p><strong>SQLite:</strong> {{ database_path }}</p>
+        <p><strong>CSV:</strong> {{ csv_path }}</p>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Перевірка якості даних</h2>
+      {% if quality_report %}
+        <div class="grid two">
+          <article class="card">
+            <h3>Загальна форма набору</h3>
+            <p>Рядків: {{ quality_report.dataset_shape.rows }}</p>
+            <p>Колонок: {{ quality_report.dataset_shape.columns }}</p>
+            <p>Дублікатів: {{ quality_report.duplicate_rows }}</p>
+          </article>
+          <article class="card">
+            <h3>Перевірка значень</h3>
+            {% for key, value in quality_report.value_validations.items() %}
+              <p>{{ key }}: {{ value }}</p>
+            {% endfor %}
+          </article>
+        </div>
+        <article class="card">
+          <h3>Топ колонок з пропусками</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Колонка</th>
+                <th>Кількість пропусків</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in quality_report.top_columns_with_missing_values %}
+                <tr>
+                  <td>{{ item.column }}</td>
+                  <td>{{ item.missing_count }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </article>
+      {% else %}
+        <p class="empty">Звіт ще не згенеровано. Запустіть контейнер `data_quality_analysis`.</p>
+      {% endif %}
+    </section>
+
+    <section class="panel">
+      <h2>Результати дослідження</h2>
+      {% if research_report %}
+        <div class="grid three">
+          <article class="card">
+            <h3>Огляд набору</h3>
+            {% for key, value in research_report.dataset_overview.items() %}
+              <p>{{ key }}: {{ value }}</p>
+            {% endfor %}
+          </article>
+          <article class="card">
+            <h3>Топ брендів</h3>
+            {% for key, value in research_report.top_brands.items() %}
+              <p>{{ key }}: {{ value }}</p>
+            {% endfor %}
+          </article>
+          <article class="card">
+            <h3>Розподіл пального</h3>
+            {% for key, value in research_report.fuel_distribution.items() %}
+              <p>{{ key }}: {{ value }}</p>
+            {% endfor %}
+          </article>
+        </div>
+      {% else %}
+        <p class="empty">Звіт ще не згенеровано. Запустіть контейнер `data_research`.</p>
+      {% endif %}
+    </section>
+
+    <section class="panel">
+      <h2>Візуалізації</h2>
+      {% if plots %}
+        <div class="gallery">
+          {% for plot in plots %}
+            <figure class="plot-card">
+              <img src="{{ plot }}" alt="Generated plot {{ loop.index }}">
+              <figcaption>{{ plot.split('/')[-1] }}</figcaption>
+            </figure>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="empty">Графіки ще не згенеровано. Запустіть контейнер `visualization`.</p>
+      {% endif %}
+    </section>
+  </main>
+</body>
+</html>

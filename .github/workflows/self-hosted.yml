@@ -19,21 +19,18 @@ jobs:
       - name: Install dependencies
         run: |
           Write-Host "Installing dependencies using local venv..."
-          # Using '&' to execute the specific python.exe path
           & $env:VENV_PYTHON -m pip install --upgrade pip
           & $env:VENV_PYTHON -m pip install -r requirements.txt
 
       - name: Environment check
         run: |
-          Write-Host "Running on Roman's local machine using Python 3.13 venv"
-          & $env:VENV_PYTHON --version
           New-Item -ItemType Directory -Force -Path artifacts/local_check
-          & $env:VENV_PYTHON -m compileall src/ | Out-File -FilePath artifacts/local_check/status.txt
+          & $env:VENV_PYTHON --version | Out-File -FilePath artifacts/local_check/status.txt
+          & $env:VENV_PYTHON -m compileall src data_load data_quality_analysis data_research visualization web | Add-Content -Path artifacts/local_check/status.txt
 
-      - name: Run local data load test
+      - name: Run local tests
         run: |
-          Write-Host "Testing data load module locally..."
-          & $env:VENV_PYTHON src/get_data.py | Add-Content -Path artifacts/local_check/status.txt
+          & $env:VENV_PYTHON -m pytest -q | Add-Content -Path artifacts/local_check/status.txt
 
       - name: Upload local report
         uses: actions/upload-artifact@v4

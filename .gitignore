@@ -4,4 +4,8 @@ __pycache__/
 .env
 data/raw/*
 !data/raw/.gitkeep
+reports/*.json
+reports/plots/*.png
+runtime/*.sqlite3
+.tmp_verify/
 .idea
