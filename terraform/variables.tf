@@ -96,7 +96,7 @@ variable "csv_name" {
 variable "download_if_missing" {
   description = "DOWNLOAD_IF_MISSING value for the application .env file."
   type        = string
-  default     = "false"
+  default     = "true"
 }
 
 variable "web_host" {
