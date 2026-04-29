@@ -90,6 +90,7 @@ services:
 networks:
   analytics-net:
     driver: bridge
+    name: analytics-net
 
 volumes:
   data_volume:

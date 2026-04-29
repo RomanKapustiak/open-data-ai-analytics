@@ -16,11 +16,10 @@ runcmd:
 
   - usermod -aG docker ${admin_username}
 
-  - git clone ${repository_url} /home/${admin_username}/app
-  - cd /home/${admin_username}/app
+  - git clone ${repository_url} ${repository_clone_path}
 
   - |
-    cat <<EOF > .env
+    cat <<EOF > ${repository_clone_path}/.env
     DATA_DIR=${data_dir}
     RAW_DATA_DIR=${raw_data_dir}
     REPORTS_DIR=${reports_dir}
@@ -35,4 +34,5 @@ runcmd:
     SAMPLE_PLOT_ROWS=${sample_plot_rows}
     EOF
 
-  - docker compose up -d
+  - docker compose --env-file ${repository_clone_path}/.env -f ${repository_clone_path}/compose.yaml up -d
+  - docker compose --env-file ${repository_clone_path}/.env -f ${repository_clone_path}/monitoring/docker-compose.monitoring.yml up -d
