@@ -2,20 +2,25 @@
 package_update: true
 package_upgrade: true
 packages:
-  - docker.io
-  - docker-compose-plugin
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - software-properties-common
   - git
 
 runcmd:
-  - systemctl enable docker
-  - systemctl start docker
+  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+  - add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+  - apt-get update
+  - apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+
   - usermod -aG docker ${admin_username}
-  - mkdir -p ${repository_clone_path}
-  - chown -R ${admin_username}:${admin_username} ${repository_clone_path}
-  - sudo -u ${admin_username} test -d ${repository_clone_path}/.git || sudo -u ${admin_username} git clone ${repository_url} ${repository_clone_path}
-  - chown -R ${admin_username}:${admin_username} ${repository_clone_path}
+
+  - git clone ${repository_url} /home/${admin_username}/app
+  - cd /home/${admin_username}/app
+
   - |
-    cat > ${repository_clone_path}/.env <<EOF
+    cat <<EOF > .env
     DATA_DIR=${data_dir}
     RAW_DATA_DIR=${raw_data_dir}
     REPORTS_DIR=${reports_dir}
@@ -29,5 +34,5 @@ runcmd:
     DB_WAIT_TIMEOUT_SECONDS=${db_wait_timeout_seconds}
     SAMPLE_PLOT_ROWS=${sample_plot_rows}
     EOF
-  - chown ${admin_username}:${admin_username} ${repository_clone_path}/.env
-  - sudo -u ${admin_username} bash -lc "cd ${repository_clone_path} && sg docker -c 'docker compose up -d'"
+
+  - docker compose up -d
