@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: web
-          image: romankapustiak/open-data-analytics-web:latest
+          image: remmismundboss/open-data-analytics-web:latest
           ports:
             - containerPort: 8000
           env:
