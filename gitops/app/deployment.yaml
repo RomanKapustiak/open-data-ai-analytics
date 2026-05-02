@@ -21,3 +21,24 @@ spec:
           env:
             - name: ENV
               value: production
+          volumeMounts:
+            - name: data-volume
+              mountPath: /app/data
+              readOnly: true
+            - name: runtime-volume
+              mountPath: /app/runtime
+            - name: reports-volume
+              mountPath: /app/reports
+      volumes:
+        - name: data-volume
+          hostPath:
+            path: /var/lib/docker/volumes/open-data-ai-analytics_data_volume/_data
+            type: Directory
+        - name: runtime-volume
+          hostPath:
+            path: /var/lib/docker/volumes/open-data-ai-analytics_runtime_volume/_data
+            type: Directory
+        - name: reports-volume
+          hostPath:
+            path: /var/lib/docker/volumes/open-data-ai-analytics_reports_volume/_data
+            type: Directory
