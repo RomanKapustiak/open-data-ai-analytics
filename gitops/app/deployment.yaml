@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-deployment
+  namespace: open-data-analytics
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+        - name: web
+          image: romankapustiak/open-data-analytics-web:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: ENV
+              value: production
